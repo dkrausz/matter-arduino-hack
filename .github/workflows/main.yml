@@ -1,0 +1,46 @@
+name: Gerar Matter NVS
+on: 
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: espressif/esp-matter:latest
+    steps:
+      - name: Preparar Pastas
+        run: mkdir -p /tmp/matter-out
+        
+      - name: Encontrar e Gerar Placas
+        shell: bash
+        run: |
+          # 1. Procura automaticamente onde a Espressif colocou o mfg_tool.py
+          TOOL_DIR=$(dirname $(find /opt /github /workspace -name mfg_tool.py -type f 2>/dev/null | head -n 1))
+          echo "Ferramenta encontrada na pasta: $TOOL_DIR"
+          cd $TOOL_DIR
+          
+          # 2. Ativa o ambiente do Matter (Necessário para o gerador de chaves funcionar)
+          source ../../export.sh || echo "Aviso: export.sh não encontrado, prosseguindo..."
+          
+          # 3. Gerando Placa 1
+          python3 mfg_tool.py -n 1 -v 0xFFF1 -p 0x8001 --passcode 20202021 --discriminator 3840
+          mv out/1 /tmp/matter-out/Placa_1
+          rm -rf out
+          
+          # 4. Gerando Placa 2
+          python3 mfg_tool.py -n 1 -v 0xFFF1 -p 0x8001 --passcode 20202021 --discriminator 3841
+          mv out/1 /tmp/matter-out/Placa_2
+          rm -rf out
+          
+          # 5. Gerando Placa 3
+          python3 mfg_tool.py -n 1 -v 0xFFF1 -p 0x8001 --passcode 20202021 --discriminator 3842
+          mv out/1 /tmp/matter-out/Placa_3
+          rm -rf out
+          
+          # 6. Gerando Placa 4
+          python3 mfg_tool.py -n 1 -v 0xFFF1 -p 0x8001 --passcode 20202021 --discriminator 3843
+          mv out/1 /tmp/matter-out/Placa_4
+          
+      - name: Baixar Arquivos
+        uses: actions/upload-artifact@v4
+        with:
+          name: Certificados_Matter
+          path: /tmp/matter-out/
